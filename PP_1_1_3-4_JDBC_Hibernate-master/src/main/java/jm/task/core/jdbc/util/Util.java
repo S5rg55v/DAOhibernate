@@ -27,7 +27,7 @@ public class Util {
 
             ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                     .applySettings(configuration.getProperties()).build();
-            sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+            sessionFactory = new Configuration().configure().buildSessionFactory(serviceRegistry);    
         } catch (Throwable e) {
             e.printStackTrace();
         }

@@ -22,8 +22,11 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
+        Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
+            session.createNativeQuery("DROP TABLE IF EXISTS jdbcconnect.users").executeUpdate();
+
             session.createNativeQuery("CREATE TABLE IF NOT EXISTS jdbcconnect.users (" +
                     "id mediumint not null AUTO_INCREMENT, " +
                     "name VARCHAR(50), " +
@@ -33,28 +36,36 @@ public class UserDaoHibernateImpl implements UserDao {
             transaction.commit();
             logger.info("Table Created");
         } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             logger.error("Error creating table", e);
         }
     }
 
     @Override
     public void dropUsersTable() {
+        Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             session.createNativeQuery("DROP TABLE jdbcconnect.users").executeUpdate();
             transaction.commit();
-            logger.info("Table Dropped");
+            logger.info("Table Dropped ");
         } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             logger.error("Error dropping table", e);
         }
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
+        Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
 
-            String sql = "INSERT INTO users (name, lastName, age) VALUES (:name, :lastName, :age)";
+            String sql = "INSERT INTO jdbcconnect.users (name, lastName, age) VALUES (:name, :lastName, :age)";
             Query query = session.createNativeQuery(sql);
             query.setParameter("name", name);
             query.setParameter("lastName", lastName);
@@ -64,14 +75,18 @@ public class UserDaoHibernateImpl implements UserDao {
             transaction.commit();
             logger.info("User {} Saved", name);
         } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             logger.error("Error saving user", e);
         }
     }
 
     @Override
     public void removeUserById(long id) {
+        Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             User user = session.get(User.class, id);
             if (user != null) {
                 session.delete(user);
@@ -79,8 +94,14 @@ public class UserDaoHibernateImpl implements UserDao {
                 logger.info("User {} Removed", id);
             } else {
                 logger.warn("User with id {} not found", id);
+                if (transaction != null) {
+                    transaction.rollback();
+                }
             }
         } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             logger.error("Error removing user", e);
         }
     }
@@ -88,11 +109,16 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public List<User> getAllUsers() {
         List<User> list = new ArrayList<>();
+        Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             list = session.createQuery("FROM User", User.class).getResultList();
             transaction.commit();
+            logger.info("Users Found");
         } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             logger.error("Error getting all users", e);
         }
         return list;
@@ -100,14 +126,17 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void cleanUsersTable() {
+        Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
-            session.createNativeQuery("DROP TABLE jdbcconnect.users").executeUpdate();
+            transaction = session.beginTransaction();
+            session.createNativeQuery("DELETE FROM jdbcconnect.users").executeUpdate();
             transaction.commit();
             logger.info("Table Cleaned");
         } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             logger.error("Error cleaning table", e);
         }
     }
 }
-
